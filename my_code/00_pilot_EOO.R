@@ -1,5 +1,17 @@
+
+# install packages -----------------------------------------------------------
+install.packages("ConR")
+install.packages("sp")
+install.packages("devtools")
+devtools::install_github("gdauby/ConR")
+install.packages('lwgeom')
+
+#- packages -----------------------------------------------------------------
+
 library(dplyr)
 library(ConR)
+b
+#----------------------------------------------------------------------------
 
 # use spp suggested by CNCflora
 
@@ -27,7 +39,9 @@ MyData <- oc.data[, c("ddlat","ddlon",
                       "detBy","dety",
                       "tax.check2","tax.check.final","UC",
                       "dist.eoo","tax.conf","source")]
-MyData$tax.check2 <- MyData$tax.check2 %in% "TRUE" # the super,hyper high confidence level
+
+MyData$tax.check2 <- MyData$tax.check2 %in% "TRUE" # the super confidence level
+
 rm(oc.data)
 
 # spp list suggested by CNCflora (only 2 were included in Renato's data)
@@ -36,7 +50,7 @@ spp_flt <- c("Euterpe edulis","Apuleia leiocarpa")
 
 # filtering the data to the above spp. list
 
-MyData_f <- filter(MyData,tax %in%spp_flt)
+MyData_f <- filter(MyData, tax %in% spp_flt)
 
 
 #---- EXTENT OF OCCURRENCE (EOO) -----------------------------------------------
@@ -46,7 +60,8 @@ system.time(
 EOO.hull <- ConR::EOO.computing(XY = MyData_f[grepl("high", MyData_f$tax.check.final), c(1:3)],
                     method.range = "convex.hull",
                     export_shp = TRUE,
-                    parallel = F)
+                    parallel = F, # parallelize
+                    NbeCores = 1) # how many cores?
 )
 
  
@@ -54,5 +69,8 @@ EOO.hull <- ConR::EOO.computing(XY = MyData_f[grepl("high", MyData_f$tax.check.f
 EOO <- do.call(rbind.data.frame, EOO.hull[grepl("eoo", names(EOO.hull$results))])
 
 # saving spp. ranges
+
+getwd()
+dir.create("EOO")
 saveRDS(EOO, "EOO/spp.convex.hull.polys_sf_uncropped.rds")
 
